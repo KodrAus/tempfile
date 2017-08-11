@@ -13,50 +13,6 @@
        html_root_url = "https://docs.rs/tempdir/0.3.5")]
 #![cfg_attr(test, deny(warnings))]
 
-//! Temporary directories of files.
-//!
-//! The [`TempDir`] type creates a directory on the file system that
-//! is deleted once it goes out of scope. At construction, the
-//! `TempDir` creates a new directory with a randomly generated name
-//! and a prefix of your choosing.
-//!
-//! [`TempDir`]: struct.TempDir.html
-//! [`std::env::temp_dir()`]: https://doc.rust-lang.org/std/env/fn.temp_dir.html
-//!
-//! # Examples
-//!
-//! ```
-//! extern crate tempdir;
-//!
-//! use std::fs::File;
-//! use std::io::{self, Write};
-//! use tempdir::TempDir;
-//!
-//! fn main() {
-//!     if let Err(_) = run() {
-//!         ::std::process::exit(1);
-//!     }
-//! }
-//!
-//! fn run() -> Result<(), io::Error> {
-//!     // Create a directory inside of `std::env::temp_dir()`, named with
-//!     // the prefix "example".
-//!     let tmp_dir = TempDir::new("example")?;
-//!     let file_path = tmp_dir.path().join("my-temporary-note.txt");
-//!     let mut tmp_file = File::create(file_path)?;
-//!     writeln!(tmp_file, "Brian was here. Briefly.")?;
-//!
-//!     // By closing the `TempDir` explicitly, we can check that it has
-//!     // been deleted successfully. If we don't close it explicitly,
-//!     // the directory will still be deleted when `tmp_dir` goes out
-//!     // of scope, but we won't know whether deleting the directory
-//!     // succeeded.
-//!     drop(tmp_file);
-//!     tmp_dir.close()?;
-//!     Ok(())
-//! }
-//! ```
-
 extern crate rand;
 extern crate remove_dir_all;
 

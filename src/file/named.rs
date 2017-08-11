@@ -6,9 +6,7 @@ use std::error;
 use std::fmt;
 use std::env;
 use std;
-use util;
-
-use super::imp;
+use super::{imp, util};
 
 /// A named temporary file.
 ///

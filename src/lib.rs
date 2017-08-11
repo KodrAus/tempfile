@@ -1,3 +1,47 @@
+//! Temporary directories of files.
+//!
+//! The [`TempDir`] type creates a directory on the file system that
+//! is deleted once it goes out of scope. At construction, the
+//! `TempDir` creates a new directory with a randomly generated name
+//! and a prefix of your choosing.
+//!
+//! [`TempDir`]: struct.TempDir.html
+//! [`std::env::temp_dir()`]: https://doc.rust-lang.org/std/env/fn.temp_dir.html
+//!
+//! # Examples
+//!
+//! ```
+//! extern crate tempfile;
+//!
+//! use std::fs::File;
+//! use std::io::{self, Write};
+//! use tempfile::TempDir;
+//!
+//! fn main() {
+//!     if let Err(_) = run() {
+//!         ::std::process::exit(1);
+//!     }
+//! }
+//!
+//! fn run() -> Result<(), io::Error> {
+//!     // Create a directory inside of `std::env::temp_dir()`, named with
+//!     // the prefix "example".
+//!     let tmp_dir = TempDir::new("example")?;
+//!     let file_path = tmp_dir.path().join("my-temporary-note.txt");
+//!     let mut tmp_file = File::create(file_path)?;
+//!     writeln!(tmp_file, "Brian was here. Briefly.")?;
+//!
+//!     // By closing the `TempDir` explicitly, we can check that it has
+//!     // been deleted successfully. If we don't close it explicitly,
+//!     // the directory will still be deleted when `tmp_dir` goes out
+//!     // of scope, but we won't know whether deleting the directory
+//!     // succeeded.
+//!     drop(tmp_file);
+//!     tmp_dir.close()?;
+//!     Ok(())
+//! }
+//! ```
+//! 
 //! Securely create and manage temporary files. Temporary files created by this create are
 //! automatically deleted.
 //!
@@ -32,6 +76,7 @@
 //!
 
 extern crate rand;
+extern crate remove_dir_all;
 
 #[cfg(unix)]
 extern crate libc;
@@ -45,10 +90,9 @@ extern crate kernel32;
 const NUM_RETRIES: u32 = 1 << 31;
 const NUM_RAND_CHARS: usize = 6;
 
-mod util;
-mod imp;
-mod named;
-mod unnamed;
+mod dir;
+mod file;
 
-pub use named::{NamedTempFile, NamedTempFileOptions, PersistError};
-pub use unnamed::{tempfile, tempfile_in};
+pub use file::named::{NamedTempFile, NamedTempFileOptions, PersistError};
+pub use file::unnamed::{tempfile, tempfile_in};
+pub use dir::{TempDir};

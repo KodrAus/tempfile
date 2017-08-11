@@ -6,7 +6,7 @@ use std::ptr;
 use std::fs::File;
 use winapi::{self, DWORD, HANDLE};
 use kernel32::{CreateFileW, ReOpenFile, SetFileAttributesW, MoveFileExW};
-use util;
+use file::util;
 
 #[cfg_attr(irustfmt, rustfmt_skip)]
 const ACCESS: DWORD     = winapi::FILE_GENERIC_READ

@@ -8,7 +8,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-extern crate tempdir;
+extern crate tempfile;
 
 use std::env;
 use std::fs;
@@ -16,7 +16,7 @@ use std::path::Path;
 use std::sync::mpsc::channel;
 use std::thread;
 
-use tempdir::TempDir;
+use tempfile::TempDir;
 
 macro_rules! t {
     ($e:expr) => (match $e { Ok(n) => n, Err(e) => panic!("error: {}", e) })
