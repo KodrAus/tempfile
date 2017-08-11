@@ -63,6 +63,11 @@ impl TempFile {
     pub fn new_in<P: AsRef<Path>>(dir: P) -> io::Result<TempFile> {
         imp::create(dir.as_ref()).map(TempFile)
     }
+
+    /// Convert the temporary file into a `std::fs::File`.
+    pub fn into_inner(file: TempFile) -> File {
+        file.0
+    }
 }
 
 impl Read for TempFile {

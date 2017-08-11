@@ -25,7 +25,7 @@ pub struct NamedTempFile(Option<NamedTempFileInner>);
 
 impl AsRef<Path> for NamedTempFile {
     fn as_ref(&self) -> &Path {
-        &self.path()
+        NamedTempFile::path(self)
     }
 }
 
@@ -146,8 +146,8 @@ impl NamedTempFile {
     /// temporary file cleaner won't have deleted your file. Otherwise, the path
     /// returned by this method may refer to an attacker controlled file.
     #[inline]
-    pub fn path(&self) -> &Path {
-        &self.inner().path
+    pub fn path(file: &NamedTempFile) -> &Path {
+        &file.inner().path
     }
 
     /// Close and remove the temporary file.
@@ -170,12 +170,12 @@ impl NamedTempFile {
     /// *SECURITY WARNING:* Only use this method if you're positive that a
     /// temporary file cleaner won't have deleted your file. Otherwise, you
     /// might end up persisting an attacker controlled file.
-    pub fn persist<P: AsRef<Path>>(mut self, new_path: P) -> Result<File, PersistError> {
-        match imp::persist(&self.inner().path, new_path.as_ref(), true) {
-            Ok(_) => Ok(self.0.take().unwrap().file),
+    pub fn persist<P: AsRef<Path>>(mut file: NamedTempFile, new_path: P) -> Result<File, PersistError> {
+        match imp::persist(&file.inner().path, new_path.as_ref(), true) {
+            Ok(_) => Ok(file.0.take().unwrap().file),
             Err(e) => {
                 Err(PersistError {
-                    file: self,
+                    file: file,
                     error: e,
                 })
             }
@@ -194,12 +194,12 @@ impl NamedTempFile {
     /// *SECURITY WARNING:* Only use this method if you're positive that a
     /// temporary file cleaner won't have deleted your file. Otherwise, you
     /// might end up persisting an attacker controlled file.
-    pub fn persist_noclobber<P: AsRef<Path>>(mut self, new_path: P) -> Result<File, PersistError> {
-        match imp::persist(&self.inner().path, new_path.as_ref(), false) {
-            Ok(_) => Ok(self.0.take().unwrap().file),
+    pub fn persist_noclobber<P: AsRef<Path>>(mut file: NamedTempFile, new_path: P) -> Result<File, PersistError> {
+        match imp::persist(&file.inner().path, new_path.as_ref(), false) {
+            Ok(_) => Ok(file.0.take().unwrap().file),
             Err(e) => {
                 Err(PersistError {
-                    file: self,
+                    file: file,
                     error: e,
                 })
             }
@@ -212,14 +212,13 @@ impl NamedTempFile {
     /// the same file. It's perfectly fine to drop the original `NamedTempFile`
     /// while holding on to `File`s returned by this function; the `File`s will
     /// remain usable. However, they may not be nameable.
-    pub fn reopen(&self) -> io::Result<File> {
-        imp::reopen(self, self.path())
+    pub fn reopen(file: &NamedTempFile) -> io::Result<File> {
+        imp::reopen(file, NamedTempFile::path(file))
     }
-}
 
-impl From<NamedTempFile> for File {
-    fn from(mut f: NamedTempFile) -> File {
-        let NamedTempFileInner { path, file } = f.0.take().unwrap();
+    /// Convert the temporary file into a `std::fs::File`.
+    pub fn into_inner(mut file: NamedTempFile) -> File {
+        let NamedTempFileInner { path, file } = file.0.take().unwrap();
         let _ = fs::remove_file(path);
         file
     }
