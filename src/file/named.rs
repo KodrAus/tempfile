@@ -23,15 +23,9 @@ use super::{imp, util};
 /// path will no longer be valid.
 pub struct NamedTempFile(Option<NamedTempFileInner>);
 
-impl AsRef<File> for NamedTempFile {
-    fn as_ref(&self) -> &File {
-        self
-    }
-}
-
-impl AsMut<File> for NamedTempFile {
-    fn as_mut(&mut self) -> &mut File {
-        self
+impl AsRef<Path> for NamedTempFile {
+    fn as_ref(&self) -> &Path {
+        &self.path()
     }
 }
 
