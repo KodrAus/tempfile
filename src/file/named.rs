@@ -30,22 +30,21 @@ struct NamedTempFileInner {
 
 impl fmt::Debug for NamedTempFile {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "NamedTempFile({:?})", self.0.as_ref().unwrap().path)
+        write!(f, "NamedTempFile({:?})", self.inner().path)
     }
 }
 
-impl Deref for NamedTempFile {
-    type Target = File;
+impl AsRef<File> for NamedTempFile {
     #[inline]
-    fn deref(&self) -> &File {
-        &self.inner().file
+    fn as_ref(&self) -> &File {
+        self.file()
     }
 }
 
-impl DerefMut for NamedTempFile {
+impl AsMut<File> for NamedTempFile {
     #[inline]
-    fn deref_mut(&mut self) -> &mut File {
-        &mut self.inner_mut().file
+    fn as_mut(&mut self) -> &mut File {
+        self.file_mut()
     }
 }
 
@@ -98,6 +97,11 @@ impl NamedTempFile {
         self.0.as_mut().unwrap()
     }
 
+    #[inline]
+    fn take_inner(&mut self) -> NamedTempFileInner {
+        self.0.take().unwrap()
+    }
+
     /// Create a new temporary file.
     ///
     /// *SECURITY WARNING:* This will create a temporary file in the default temporary file
@@ -140,15 +144,15 @@ impl NamedTempFile {
     /// temporary file cleaner won't have deleted your file. Otherwise, the path
     /// returned by this method may refer to an attacker controlled file.
     #[inline]
-    pub fn path(file: &NamedTempFile) -> &Path {
-        &file.inner().path
+    pub fn path(&self) -> &Path {
+        &self.inner().path
     }
 
     /// Close and remove the temporary file.
     ///
     /// Use this if you want to detect errors in deleting the file.
     pub fn close(mut self) -> io::Result<()> {
-        let NamedTempFileInner { path, file } = self.0.take().unwrap();
+        let NamedTempFileInner { path, file } = self.take_inner();
         drop(file);
         fs::remove_file(path)
     }
@@ -164,12 +168,12 @@ impl NamedTempFile {
     /// *SECURITY WARNING:* Only use this method if you're positive that a
     /// temporary file cleaner won't have deleted your file. Otherwise, you
     /// might end up persisting an attacker controlled file.
-    pub fn persist<P: AsRef<Path>>(mut file: NamedTempFile, new_path: P) -> Result<File, PersistError> {
-        match imp::persist(&file.inner().path, new_path.as_ref(), true) {
-            Ok(_) => Ok(file.0.take().unwrap().file),
+    pub fn persist<P: AsRef<Path>>(mut self, new_path: P) -> Result<File, PersistError> {
+        match imp::persist(&self.inner().path, new_path.as_ref(), true) {
+            Ok(_) => Ok(self.take_inner().file),
             Err(e) => {
                 Err(PersistError {
-                    file: file,
+                    file: self,
                     error: e,
                 })
             }
@@ -190,7 +194,7 @@ impl NamedTempFile {
     /// might end up persisting an attacker controlled file.
     pub fn persist_noclobber<P: AsRef<Path>>(mut file: NamedTempFile, new_path: P) -> Result<File, PersistError> {
         match imp::persist(&file.inner().path, new_path.as_ref(), false) {
-            Ok(_) => Ok(file.0.take().unwrap().file),
+            Ok(_) => Ok(file.take_inner().file),
             Err(e) => {
                 Err(PersistError {
                     file: file,
@@ -206,13 +210,21 @@ impl NamedTempFile {
     /// the same file. It's perfectly fine to drop the original `NamedTempFile`
     /// while holding on to `File`s returned by this function; the `File`s will
     /// remain usable. However, they may not be nameable.
-    pub fn reopen(file: &NamedTempFile) -> io::Result<File> {
-        imp::reopen(file, NamedTempFile::path(file))
+    pub fn reopen(&self) -> io::Result<File> {
+        imp::reopen(self.as_ref(), NamedTempFile::path(self))
+    }
+
+    pub fn file(&self) -> &File {
+        &self.inner().file
+    }
+
+    pub fn file_mut(&mut self) -> &mut File {
+        &mut self.inner_mut().file
     }
 
     /// Convert the temporary file into a `std::fs::File`.
-    pub fn into_inner(mut file: NamedTempFile) -> File {
-        let NamedTempFileInner { path, file } = file.0.take().unwrap();
+    pub fn into_file(mut self) -> File {
+        let NamedTempFileInner { path, file } = self.take_inner();
         let _ = fs::remove_file(path);
         file
     }
@@ -229,45 +241,45 @@ impl Drop for NamedTempFile {
 
 impl Read for NamedTempFile {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        (**self).read(buf)
+        self.as_mut().read(buf)
     }
 }
 
 impl<'a> Read for &'a NamedTempFile {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        (&***self).read(buf)
+        self.as_ref().read(buf)
     }
 }
 
 impl Write for NamedTempFile {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        (**self).write(buf)
+        self.as_mut().write(buf)
     }
     #[inline]
     fn flush(&mut self) -> io::Result<()> {
-        (**self).flush()
+        self.as_mut().flush()
     }
 }
 
 impl<'a> Write for &'a NamedTempFile {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        (&***self).write(buf)
+        self.as_ref().write(buf)
     }
     #[inline]
     fn flush(&mut self) -> io::Result<()> {
-        (&***self).flush()
+        self.as_ref().flush()
     }
 }
 
 impl Seek for NamedTempFile {
     fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
-        (**self).seek(pos)
+        self.as_mut().seek(pos)
     }
 }
 
 impl<'a> Seek for &'a NamedTempFile {
     fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
-        (&***self).seek(pos)
+        self.as_ref().seek(pos)
     }
 }
 
@@ -275,7 +287,7 @@ impl<'a> Seek for &'a NamedTempFile {
 impl std::os::unix::io::AsRawFd for NamedTempFile {
     #[inline]
     fn as_raw_fd(&self) -> std::os::unix::io::RawFd {
-        (**self).as_raw_fd()
+        self.as_ref().as_raw_fd()
     }
 }
 
@@ -283,7 +295,7 @@ impl std::os::unix::io::AsRawFd for NamedTempFile {
 impl std::os::windows::io::AsRawHandle for NamedTempFile {
     #[inline]
     fn as_raw_handle(&self) -> std::os::windows::io::RawHandle {
-        (**self).as_raw_handle()
+        self.as_ref().as_raw_handle()
     }
 }
 

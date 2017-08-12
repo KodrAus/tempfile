@@ -24,18 +24,17 @@ use super::imp;
 /// from the filesystem.
 pub struct TempFile(File);
 
-impl Deref for TempFile {
-    type Target = File;
+impl AsRef<File> for TempFile {
     #[inline]
-    fn deref(&self) -> &File {
-        &self.0
+    fn as_ref(&self) -> &File {
+        self.file()
     }
 }
 
-impl DerefMut for TempFile {
+impl AsMut<File> for TempFile {
     #[inline]
-    fn deref_mut(&mut self) -> &mut File {
-        &mut self.0
+    fn as_mut(&mut self) -> &mut File {
+        self.file_mut()
     }
 }
 
@@ -64,9 +63,17 @@ impl TempFile {
         imp::create(dir.as_ref()).map(TempFile)
     }
 
+    pub fn file(&self) -> &File {
+        &self.0
+    }
+
+    pub fn file_mut(&mut self) -> &mut File {
+        &mut self.0
+    }
+
     /// Convert the temporary file into a `std::fs::File`.
-    pub fn into_inner(file: TempFile) -> File {
-        file.0
+    pub fn into_file(self) -> File {
+        self.0
     }
 }
 
