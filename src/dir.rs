@@ -24,6 +24,24 @@ use std::path::{self, PathBuf, Path};
 use rand::{thread_rng, Rng};
 use remove_dir_all::remove_dir_all;
 
+/// Create a new temporary directory.
+/// 
+/// The `tempdir` function creates a directory in the file system
+/// and returns a [`TempDir`].
+/// The directory will be automatically deleted when the `TempDir`s
+/// desctructor is run.
+/// 
+/// # Resource Leaking
+/// 
+/// > TODO
+/// 
+/// # Examples
+/// 
+/// > TODO
+pub fn tempdir(prefix: &str) -> io::Result<TempDir> {
+    TempDir::new(prefix)
+}
+
 /// A directory in the filesystem that is automatically deleted when
 /// it goes out of scope.
 ///
@@ -45,6 +63,8 @@ use remove_dir_all::remove_dir_all;
 /// to ensure that no further file system operations are attempted
 /// inside the temporary directory once it has been deleted.
 ///
+/// # Resource Leaking
+/// 
 /// Various platform-specific conditions may cause `TempDir` to fail
 /// to delete the underlying directory. It's important to ensure that
 /// handles (like [`File`] and [`ReadDir`]) to files inside the
