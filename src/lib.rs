@@ -1,13 +1,13 @@
 //! Temporary files and directories.
 //! 
 //! - Use the [`tempfile`] function for temporary files
-//! - Use the [`tempdir`] function for temporary directories.
+//! - Use the [`tempdir`][fn.tempdir] function for temporary directories.
 //! 
 //! # Design
 //! 
 //! This crate provides several approaches to creating temporary files and directories.
 //! [`tempfile`] relies on the OS to remove the temporary file once the last handle is closed.
-//! [`TempDir`] and [`NamedTempFile`] both rely on Rust destructors for cleanup.
+//! [`TempDir`][struct.TempDir] and [`NamedTempFile`] both rely on Rust destructors for cleanup.
 //! 
 //! When choosing between the temporary file variants, prefer `tempfile`
 //! unless you either need to know the file's path or to be able to persist it.
@@ -82,9 +82,9 @@
 //! # }
 //! ```
 //! 
-//! [`tempdir`]: fn.tempdir.html
+//! [fn.tempdir]: fn.tempdir.html
 //! [`tempfile`]: fn.tempfile.html
-//! [`TempDir`]: struct.TempDir.html
+//! [struct.TempDir]: struct.TempDir.html
 //! [`NamedTempFile`]: struct.NamedTempFile.html
 //! [`std::env::temp_dir()`]: https://doc.rust-lang.org/std/env/fn.temp_dir.html
 

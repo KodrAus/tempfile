@@ -33,11 +33,18 @@ use remove_dir_all::remove_dir_all;
 /// 
 /// # Resource Leaking
 /// 
+/// See [the resource leaking][resource-leaking] docs on `TempDir`.
+/// 
+/// # Errors
+/// 
 /// > TODO
 /// 
 /// # Examples
 /// 
 /// > TODO
+/// 
+/// [`TempDir`]: struct.TempDir.html
+/// [resource-leaking]: struct.TempDir.html#resource-leaking
 pub fn tempdir(prefix: &str) -> io::Result<TempDir> {
     TempDir::new(prefix)
 }

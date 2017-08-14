@@ -20,6 +20,10 @@ mod util;
 /// 
 /// > TODO
 /// 
+/// # Errors
+/// 
+/// > TODO
+/// 
 /// # Examples
 /// 
 /// > TODO
@@ -37,6 +41,10 @@ pub fn tempfile() -> io::Result<File> {
 /// 
 /// See [`tempfile`].
 /// 
+/// # Errors
+/// 
+/// > TODO
+/// 
 /// # Examples
 /// 
 /// > TODO
@@ -45,38 +53,30 @@ pub fn tempfile_in<P: AsRef<Path>>(dir: P) -> io::Result<File> {
 }
 
 /// A named temporary file.
-///
+/// 
+/// The default constructor, [`NamedTempDir::new`], creates files in
+/// the location returned by [`std::env::temp_dir()`], but `NamedTempDir`
+/// can be configured to manage a temporary file in any location
+/// by constructing with [`NamedTempDir::new_in`].
+/// 
 /// # Security
 /// 
 /// This variant is *NOT* secure/reliable in the presence of a pathological temporary file cleaner.
 ///
 /// # Resource Leaking
 /// 
-/// `NamedTempFile`s are deleted on drop. As rust doesn't guarantee that a struct will ever be
-/// dropped, these temporary files will not be deleted on abort, resource leak, early exit, etc.
+/// If the program exits before the `NamedTempFile` destructor is
+/// run, such as via [`std::process::exit`], by segfaulting, or by
+/// receiving a signal like `SIGINT`, then the temporary file
+/// will not be deleted.
 ///
-/// Use [`tempfile`] unless you absolutely need a named file.
+/// Use the [`tempfile`] function unless you absolutely need a named file.
 /// 
-/// # Examples
-/// 
-/// Create a named temporary file, then persist it to a new location:
-/// 
-/// ```no_run
-/// # extern crate tempfile;
-/// use tempfile::NamedTempFile;
-/// 
-/// # fn main() {
-/// #     if let Err(_) = run() {
-/// #         ::std::process::exit(1);
-/// #     }
-/// # }
-/// # fn run() -> Result<(), io::Error> {
-/// let file = NamedTempFile::new()?;
-/// 
-/// let persisted_file = file.persist("./saved_file.txt")?;
-/// # Ok(())
-/// # }
-/// ```
+/// [`tempfile`]: fn.tempfile.html
+/// [`NamedTempDir::new`]: #method.new
+/// [`NamedTempDir::new_in`]: #method.new_in
+/// [`std::env::temp_dir()`]: https://doc.rust-lang.org/std/env/fn.temp_dir.html
+/// [`std::process::exit`]: http://doc.rust-lang.org/std/process/fn.exit.html
 pub struct NamedTempFile(Option<NamedTempFileInner>);
 
 struct NamedTempFileInner {
@@ -167,7 +167,7 @@ impl NamedTempFile {
         self.0.take().unwrap()
     }
 
-    /// Create a new temporary file.
+    /// Create a new named temporary file.
     ///
     /// See [`NamedTempFileBuilder`] for more configuration.
     /// 
@@ -198,26 +198,62 @@ impl NamedTempFile {
     ///      non-temporary files. There are exceptions but if you don't already
     ///      know them, don't use this method.
     /// 
-    /// # Examples
+    /// # Errors
     /// 
     /// > TODO
+    /// 
+    /// # Examples
+    /// 
+    /// Create a named temporary file, then persist it to a new location:
+    /// 
+    /// ```no_run
+    /// # extern crate tempfile;
+    /// use tempfile::NamedTempFile;
+    /// 
+    /// # fn main() {
+    /// #     if let Err(_) = run() {
+    /// #         ::std::process::exit(1);
+    /// #     }
+    /// # }
+    /// # fn run() -> Result<(), io::Error> {
+    /// let file = NamedTempFile::new()?;
+    /// 
+    /// let persisted_file = file.persist("./saved_file.txt")?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    /// 
+    /// [`NamedTempFileBuilder`]: struct.NamedTempFileBuilder.html
     pub fn new() -> io::Result<NamedTempFile> {
         NamedTempFileBuilder::new().create()
     }
 
     /// Create a new temporary file in the specified directory.
     /// 
-    /// # Security
+    /// # Errors
     /// 
-    /// See: [`NamedTempFile::new`]
-    /// 
-    /// # Resource Leaking
-    /// 
-    /// See: [`NamedTempFile::new`]
+    /// > TODO
     /// 
     /// # Examples
     /// 
-    /// > TODO
+    /// Create a named temporary file in the current location:
+    /// 
+    /// ```no_run
+    /// # extern crate tempfile;
+    /// use tempfile::NamedTempFile;
+    /// 
+    /// # fn main() {
+    /// #     if let Err(_) = run() {
+    /// #         ::std::process::exit(1);
+    /// #     }
+    /// # }
+    /// # fn run() -> Result<(), io::Error> {
+    /// let file = NamedTempFile::new_in("./")?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    /// 
+    /// [`NamedTempFile::new`]: #method.new
     pub fn new_in<P: AsRef<Path>>(dir: P) -> io::Result<NamedTempFile> {
         NamedTempFileBuilder::new().create_in(dir)
     }
@@ -230,6 +266,10 @@ impl NamedTempFile {
     /// Only use this method if you're positive that a
     /// temporary file cleaner won't have deleted your file. Otherwise, the path
     /// returned by this method may refer to an attacker controlled file.
+    /// 
+    /// # Examples
+    /// 
+    /// > TODO
     #[inline]
     pub fn path(&self) -> &Path {
         &self.inner().path
@@ -238,6 +278,14 @@ impl NamedTempFile {
     /// Close and remove the temporary file.
     ///
     /// Use this if you want to detect errors in deleting the file.
+    /// 
+    /// # Errors
+    /// 
+    /// > TODO
+    /// 
+    /// # Examples
+    /// 
+    /// > TODO
     pub fn close(mut self) -> io::Result<()> {
         let NamedTempFileInner { path, file } = self.take_inner();
         drop(file);
@@ -248,7 +296,7 @@ impl NamedTempFile {
     ///
     /// If a file exists at the target path, persist will atomically replace it.
     /// If this method fails, it will return `self` in the resulting
-    /// PersistError.
+    /// [`PersistError`].
     ///
     /// Note: Temporary files cannot be persisted across filesystems.
     ///
@@ -258,9 +306,15 @@ impl NamedTempFile {
     /// temporary file cleaner won't have deleted your file. Otherwise, you
     /// might end up persisting an attacker controlled file.
     /// 
+    /// # Errors
+    /// 
+    /// > TODO
+    /// 
     /// # Examples
     /// 
     /// > TODO
+    /// 
+    /// [`PersistError`]: struct.PersistError.html
     pub fn persist<P: AsRef<Path>>(mut self, new_path: P) -> Result<File, PersistError> {
         match imp::persist(&self.inner().path, new_path.as_ref(), true) {
             Ok(_) => Ok(self.take_inner().file),
@@ -287,6 +341,14 @@ impl NamedTempFile {
     /// Only use this method if you're positive that a
     /// temporary file cleaner won't have deleted your file. Otherwise, you
     /// might end up persisting an attacker controlled file.
+    /// 
+    /// # Errors
+    /// 
+    /// > TODO
+    /// 
+    /// # Examples
+    /// 
+    /// > TODO
     pub fn persist_noclobber<P: AsRef<Path>>(mut file: NamedTempFile, new_path: P) -> Result<File, PersistError> {
         match imp::persist(&file.inner().path, new_path.as_ref(), false) {
             Ok(_) => Ok(file.take_inner().file),
@@ -305,6 +367,14 @@ impl NamedTempFile {
     /// the same file. It's perfectly fine to drop the original `NamedTempFile`
     /// while holding on to `File`s returned by this function; the `File`s will
     /// remain usable. However, they may not be nameable.
+    /// 
+    /// # Errors
+    /// 
+    /// > TODO
+    /// 
+    /// # Examples
+    /// 
+    /// > TODO
     pub fn reopen(&self) -> io::Result<File> {
         imp::reopen(self.file(), NamedTempFile::path(self))
     }
@@ -399,24 +469,14 @@ impl std::os::windows::io::AsRawHandle for NamedTempFile {
 
 /// Create a new temporary file with custom parameters.
 ///
-/// # Example
-/// ```
-/// use tempfile::NamedTempFileBuilder;
+/// # Security
+/// 
+/// This variant is *NOT* secure/reliable in the presence of a pathological temporary file cleaner.
 ///
-/// let named_temp_file = NamedTempFileBuilder::new()
-///                         .prefix("hogehoge")
-///                         .suffix(".rs")
-///                         .rand_bytes(5)
-///                         .create()
-///                         .unwrap();
-/// let name = named_temp_file.path()
-///   .file_name().unwrap()
-///   .to_str().unwrap();
-///
-/// assert!(name.starts_with("hogehoge"));
-/// assert!(name.ends_with(".rs"));
-/// assert_eq!(name.len(), "hogehoge.rs".len() + 5);
-/// ```
+/// # Resource Leaking
+/// 
+/// `NamedTempFile`s are deleted on drop. As rust doesn't guarantee that a struct will ever be
+/// dropped, these temporary files will not be deleted on abort, resource leak, early exit, etc.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NamedTempFileBuilder<'a, 'b> {
     random_len: usize,
@@ -425,7 +485,37 @@ pub struct NamedTempFileBuilder<'a, 'b> {
 }
 
 impl<'a, 'b> NamedTempFileBuilder<'a, 'b> {
-    /// Create a new NamedTempFileBuilder
+    /// Create a new `NamedTempFileBuilder`.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// # extern crate tempfile;
+    /// # use std::io;
+    /// # fn main() {
+    /// #     if let Err(_) = run() {
+    /// #         ::std::process::exit(1);
+    /// #     }
+    /// # }
+    /// # fn run() -> Result<(), io::Error> {
+    /// use tempfile::NamedTempFileBuilder;
+    ///
+    /// let named_temp_file = NamedTempFileBuilder::new()
+    ///     .prefix("my-temporary-note")
+    ///     .suffix(".txt")
+    ///     .rand_bytes(5)
+    ///     .create()?;
+    /// 
+    /// let name = named_temp_file
+    ///     .path()
+    ///     .file_name()?
+    ///     .to_str()?;
+    ///
+    /// assert!(name.starts_with("my-temporary-note"));
+    /// assert!(name.ends_with(".txt"));
+    /// assert_eq!(name.len(), "my-temporary-note.txt".len() + 5);
+    /// # }
+    /// ```
     pub fn new() -> Self {
         NamedTempFileBuilder {
             random_len: ::NUM_RAND_CHARS,
@@ -437,7 +527,11 @@ impl<'a, 'b> NamedTempFileBuilder<'a, 'b> {
     /// Set a custom filename prefix.
     ///
     /// Path separators are legal but not advisable.
-    /// Default: ".tmp"
+    /// Default: `.tmp`.
+    /// 
+    /// # Examples
+    /// 
+    /// > TODO
     pub fn prefix(&mut self, prefix: &'a str) -> &mut Self {
         self.prefix = prefix;
         self
@@ -446,7 +540,11 @@ impl<'a, 'b> NamedTempFileBuilder<'a, 'b> {
     /// Set a custom filename suffix.
     ///
     /// Path separators are legal but not advisable.
-    /// Default: ""
+    /// Default: empty.
+    /// 
+    /// # Examples
+    /// 
+    /// > TODO
     pub fn suffix(&mut self, suffix: &'b str) -> &mut Self {
         self.suffix = suffix;
         self
@@ -454,18 +552,46 @@ impl<'a, 'b> NamedTempFileBuilder<'a, 'b> {
 
     /// Set the number of random bytes.
     ///
-    /// Default: 6
+    /// Default: `6`.
+    /// 
+    /// # Examples
+    /// 
+    /// > TODO
     pub fn rand_bytes(&mut self, rand: usize) -> &mut Self {
         self.random_len = rand;
         self
     }
 
     /// Create the named temporary file.
+    /// 
+    /// # Security
+    /// 
+    /// See: [`NamedTempFile::new`]
+    ///  
+    /// # Errors
+    /// 
+    /// > TODO
+    /// 
+    /// # Examples
+    /// 
+    /// > TODO
+    /// 
+    /// [`NamedTempFile::new`]: struct.NamedTempFile.html#method.new
     pub fn create(&self) -> io::Result<NamedTempFile> {
         self.create_in(&env::temp_dir())
     }
 
     /// Create the named temporary file in the specified directory.
+    /// 
+    /// # Errors
+    /// 
+    /// > TODO
+    /// 
+    /// # Examples
+    /// 
+    /// > TODO
+    /// 
+    /// [`NamedTempFile::new`]: struct.NamedTempFile.html#method.new
     pub fn create_in<P: AsRef<Path>>(&self, dir: P) -> io::Result<NamedTempFile> {
         for _ in 0..::NUM_RETRIES {
             let path = dir.as_ref().join(util::tmpname(self.prefix, self.suffix, self.random_len));
