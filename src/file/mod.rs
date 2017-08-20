@@ -54,10 +54,10 @@ pub fn tempfile_in<P: AsRef<Path>>(dir: P) -> io::Result<File> {
 
 /// A named temporary file.
 /// 
-/// The default constructor, [`NamedTempDir::new`], creates files in
-/// the location returned by [`std::env::temp_dir()`], but `NamedTempDir`
+/// The default constructor, [`NamedTempFile::new`], creates files in
+/// the location returned by [`std::env::temp_dir()`], but `NamedTempFile`
 /// can be configured to manage a temporary file in any location
-/// by constructing with [`NamedTempDir::new_in`].
+/// by constructing with [`NamedTempFile::new_in`].
 /// 
 /// # Security
 /// 
