@@ -8,11 +8,6 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![doc(html_logo_url = "https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png",
-       html_favicon_url = "https://www.rust-lang.org/favicon.ico",
-       html_root_url = "https://docs.rs/tempdir/0.3.5")]
-#![cfg_attr(test, deny(warnings))]
-
 extern crate rand;
 extern crate remove_dir_all;
 
@@ -37,11 +32,37 @@ use remove_dir_all::remove_dir_all;
 /// 
 /// # Errors
 /// 
-/// > TODO
+/// If the directory can not be created, `Err` is returned.
 /// 
 /// # Examples
 /// 
-/// > TODO
+/// ```
+/// # extern crate tempfile;
+/// use tempfile::tempdir;
+/// use std::fs::File;
+/// use std::io::{self, Write};
+/// 
+/// # fn main() {
+/// #     if let Err(_) = run() {
+/// #         ::std::process::exit(1);
+/// #     }
+/// # }
+/// # fn run() -> Result<(), io::Error> {
+/// // Create a directory inside of `std::env::temp_dir()`, named with
+/// // the prefix "example".
+/// let dir = tempdir("example")?;
+/// 
+/// let file_path = dir.path().join("my-temporary-note.txt");
+/// let mut file = File::create(file_path)?;
+/// writeln!(file, "Brian was here. Briefly.")?;
+///
+/// // `tmp_dir` goes out of scope, the directory as well as
+/// // `tmp_file` will be deleted here.
+/// drop(file);
+/// dir.close()?;
+/// # Ok(())
+/// # }
+/// ```
 /// 
 /// [`TempDir`]: struct.TempDir.html
 /// [resource-leaking]: struct.TempDir.html#resource-leaking
@@ -123,7 +144,7 @@ impl TempDir {
     /// ```
     /// use std::fs::File;
     /// use std::io::Write;
-    /// use tempdir::TempDir;
+    /// use tempfile::TempDir;
     ///
     /// # use std::io;
     /// # fn run() -> Result<(), io::Error> {
@@ -157,7 +178,7 @@ impl TempDir {
     /// ```
     /// use std::fs::{self, File};
     /// use std::io::Write;
-    /// use tempdir::TempDir;
+    /// use tempfile::TempDir;
     ///
     /// # use std::io;
     /// # fn run() -> Result<(), io::Error> {
@@ -210,7 +231,7 @@ impl TempDir {
     /// # Examples
     ///
     /// ```
-    /// use tempdir::TempDir;
+    /// use tempfile::TempDir;
     ///
     /// # use std::io;
     /// # fn run() -> Result<(), io::Error> {
@@ -245,7 +266,7 @@ impl TempDir {
     ///
     /// ```
     /// use std::fs;
-    /// use tempdir::TempDir;
+    /// use tempfile::TempDir;
     ///
     /// # use std::io;
     /// # fn run() -> Result<(), io::Error> {
@@ -284,7 +305,7 @@ impl TempDir {
     /// ```
     /// use std::fs::File;
     /// use std::io::Write;
-    /// use tempdir::TempDir;
+    /// use tempfile::TempDir;
     ///
     /// # use std::io;
     /// # fn run() -> Result<(), io::Error> {
@@ -337,7 +358,3 @@ impl Drop for TempDir {
         }
     }
 }
-
-// the tests for this module need to change the path using change_dir,
-// and this doesn't play nicely with other tests so these unit tests are located
-// in src/test/run-pass/tempfile.rs

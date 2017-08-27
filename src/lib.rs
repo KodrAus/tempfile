@@ -88,6 +88,11 @@
 //! [`NamedTempFile`]: struct.NamedTempFile.html
 //! [`std::env::temp_dir()`]: https://doc.rust-lang.org/std/env/fn.temp_dir.html
 
+#![doc(html_logo_url = "https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png",
+       html_favicon_url = "https://www.rust-lang.org/favicon.ico",
+       html_root_url = "https://docs.rs/tempdir/0.3.5")]
+#![cfg_attr(test, deny(warnings))]
+
 extern crate rand;
 extern crate remove_dir_all;
 
