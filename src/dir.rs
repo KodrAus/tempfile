@@ -8,9 +8,6 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-extern crate rand;
-extern crate remove_dir_all;
-
 use std::env;
 use std::io::{self, Error, ErrorKind};
 use std::fmt;

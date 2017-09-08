@@ -1,7 +1,6 @@
 use std::io::{self, Read, Write, Seek, SeekFrom};
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
-use std::ops::{Deref, DerefMut};
 use std::error;
 use std::fmt;
 use std::env;
@@ -130,22 +129,6 @@ struct NamedTempFileInner {
 impl fmt::Debug for NamedTempFile {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "NamedTempFile({:?})", self.inner().path)
-    }
-}
-
-impl Deref for NamedTempFile {
-    type Target = File;
-
-    #[inline]
-    fn deref(&self) -> &File {
-        self.file()
-    }
-}
-
-impl DerefMut for NamedTempFile {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut File {
-        self.file_mut()
     }
 }
 
@@ -511,16 +494,16 @@ impl NamedTempFile {
     /// # }
     /// ```
     pub fn reopen(&self) -> io::Result<File> {
-        imp::reopen(self.file(), NamedTempFile::path(self))
+        imp::reopen(self.as_file(), NamedTempFile::path(self))
     }
 
     /// Get a reference to the underlying file.
-    pub fn file(&self) -> &File {
+    pub fn as_file(&self) -> &File {
         &self.inner().file
     }
 
     /// Get a mutable reference to the underlying file.
-    pub fn file_mut(&mut self) -> &mut File {
+    pub fn as_file_mut(&mut self) -> &mut File {
         &mut self.inner_mut().file
     }
 
@@ -543,45 +526,45 @@ impl Drop for NamedTempFile {
 
 impl Read for NamedTempFile {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.file_mut().read(buf)
+        self.as_file_mut().read(buf)
     }
 }
 
 impl<'a> Read for &'a NamedTempFile {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.file().read(buf)
+        self.as_file().read(buf)
     }
 }
 
 impl Write for NamedTempFile {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.file_mut().write(buf)
+        self.as_file_mut().write(buf)
     }
     #[inline]
     fn flush(&mut self) -> io::Result<()> {
-        self.file_mut().flush()
+        self.as_file_mut().flush()
     }
 }
 
 impl<'a> Write for &'a NamedTempFile {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.file().write(buf)
+        self.as_file().write(buf)
     }
     #[inline]
     fn flush(&mut self) -> io::Result<()> {
-        self.file().flush()
+        self.as_file().flush()
     }
 }
 
 impl Seek for NamedTempFile {
     fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
-        self.file_mut().seek(pos)
+        self.as_file_mut().seek(pos)
     }
 }
 
 impl<'a> Seek for &'a NamedTempFile {
     fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
-        self.file().seek(pos)
+        self.as_file().seek(pos)
     }
 }
 
@@ -597,7 +580,7 @@ impl std::os::unix::io::AsRawFd for NamedTempFile {
 impl std::os::windows::io::AsRawHandle for NamedTempFile {
     #[inline]
     fn as_raw_handle(&self) -> std::os::windows::io::RawHandle {
-        self.file().as_raw_handle()
+        self.as_file().as_raw_handle()
     }
 }
 
