@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io;
+use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 use std::os::windows::io::{AsRawHandle, FromRawHandle, RawHandle};
 use std::path::Path;
@@ -15,6 +16,7 @@ use winapi::um::winnt::{FILE_GENERIC_READ, FILE_GENERIC_WRITE, HANDLE};
 use winapi::um::winnt::{FILE_SHARE_DELETE, FILE_SHARE_READ, FILE_SHARE_WRITE};
 
 use util;
+use ::PathStr;
 
 #[cfg_attr(irustfmt, rustfmt_skip)]
 const ACCESS: DWORD     = FILE_GENERIC_READ
@@ -65,7 +67,7 @@ pub fn create_named(path: &Path) -> io::Result<File> {
 }
 
 pub fn create(dir: &Path) -> io::Result<File> {
-    util::create_helper(dir, ".tmp", "", ::NUM_RAND_CHARS, |path| {
+    util::create_helper(dir, PathStr::Utf8(".tmp"), PathStr::Utf8(""), ::NUM_RAND_CHARS, |path| {
         win_create(
             &path,
             ACCESS,

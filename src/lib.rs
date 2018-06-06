@@ -107,6 +107,7 @@ extern crate syscall;
 const NUM_RETRIES: u32 = 1 << 31;
 const NUM_RAND_CHARS: usize = 6;
 
+use std::ffi::OsStr;
 use std::path::Path;
 use std::{env, io};
 
@@ -121,16 +122,45 @@ pub use file::{tempfile, tempfile_in, NamedTempFile, PersistError, TempPath};
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Builder<'a, 'b> {
     random_len: usize,
-    prefix: &'a str,
-    suffix: &'b str,
+    prefix: PathStr<'a>,
+    suffix: PathStr<'b>,
+}
+
+// Allows us to capture valid vs maybe-valid utf8 without having
+// to check the source.
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+enum PathStr<'a> {
+    Utf8(&'a str),
+    Os(&'a OsStr),
+}
+
+impl<'a> From<&'a OsStr> for PathStr<'a> {
+    fn from(s: &'a OsStr) -> Self {
+         PathStr::Os(s)
+    }
+}
+
+impl<'a> From<&'a str> for PathStr<'a> {
+    fn from(s: &'a str) -> Self {
+        PathStr::Utf8(s)
+    }
+}
+
+impl<'a> AsRef<OsStr> for PathStr<'a> {
+    fn as_ref(&self) -> &OsStr {
+        match *self {
+            PathStr::Utf8(s) => OsStr::new(s),
+            PathStr::Os(ref s) => s,
+        }
+    }
 }
 
 impl<'a, 'b> Default for Builder<'a, 'b> {
     fn default() -> Self {
         Builder {
             random_len: ::NUM_RAND_CHARS,
-            prefix: ".tmp",
-            suffix: "",
+            prefix: PathStr::Utf8(".tmp"),
+            suffix: PathStr::Utf8(""),
         }
     }
 }
@@ -235,7 +265,12 @@ impl<'a, 'b> Builder<'a, 'b> {
     /// # }
     /// ```
     pub fn prefix(&mut self, prefix: &'a str) -> &mut Self {
-        self.prefix = prefix;
+        self.prefix = prefix.into();
+        self
+    }
+
+    pub fn prefix_os(&mut self, prefix: &'a OsStr) -> &mut Self {
+        self.prefix = prefix.into();
         self
     }
 
@@ -263,7 +298,12 @@ impl<'a, 'b> Builder<'a, 'b> {
     /// # }
     /// ```
     pub fn suffix(&mut self, suffix: &'b str) -> &mut Self {
-        self.suffix = suffix;
+        self.suffix = suffix.into();
+        self
+    }
+
+    pub fn suffix_os(&mut self, suffix: &'b OsStr) -> &mut Self {
+        self.suffix = suffix.into();
         self
     }
 

@@ -7,6 +7,7 @@ use std::os::unix::ffi::OsStrExt;
 use std::os::unix::io::{AsRawFd, FromRawFd, RawFd};
 use std::path::Path;
 use util;
+use ::PathStr;
 
 #[cfg(all(lfs_support, target_os = "linux"))]
 use libc::{fstat64 as fstat, open64 as open, stat64 as stat_t};
@@ -93,7 +94,7 @@ pub fn create(dir: &Path) -> io::Result<File> {
 }
 
 fn create_unix(dir: &Path) -> io::Result<File> {
-    util::create_helper(dir, ".tmp", "", ::NUM_RAND_CHARS, |path| {
+    util::create_helper(dir, PathStr::Utf8(".tmp"), PathStr::Utf8(""), ::NUM_RAND_CHARS, |path| {
         create_unlinked(&path)
     })
 }
